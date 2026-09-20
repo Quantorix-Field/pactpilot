@@ -176,6 +176,7 @@ const NextStepSchema = z.object({
 })
 
 export const AnalysisSchema = z.object({
+  isLegalDocument: z.boolean().default(true),
   docType: req(80),
   parties: optList(req(40), 4),
   summary: req(900),
