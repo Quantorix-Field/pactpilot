@@ -37,4 +37,4 @@ jobs:
         run: npm run lint
 
       - name: Test
-        run: npm test -- --passWithNoTests
+        run: npm test
