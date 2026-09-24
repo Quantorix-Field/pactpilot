@@ -47,6 +47,7 @@ const fullAnalysis: Analysis = {
       verified: true,
     },
   ],
+  contradictions: [],
   obligations: [
     {
       title: 'Pay rent',
