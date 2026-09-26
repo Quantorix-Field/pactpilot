@@ -223,3 +223,12 @@ export const CompareSchema = z.object({
   better: z.enum(['a', 'b', 'balanced', 'unclear']).catch('unclear'),
   differences: capped(ChangeSchema, 12),
 })
+export type ClauseIn = z.infer<typeof ClauseInSchema>
+export type Severity = (typeof SEVERITIES)[number]
+export type Citation = z.infer<typeof CitationSchema>
+export type Finding = z.infer<typeof FindingSchema>
+export type Analysis = z.infer<typeof AnalysisSchema>
+export type Obligation = Analysis['obligations'][number]
+export type WhatIfResult = z.infer<typeof WhatIfSchema>
+export type AskResult = z.infer<typeof AskSchema>
+export type CompareResult = z.infer<typeof CompareSchema>
