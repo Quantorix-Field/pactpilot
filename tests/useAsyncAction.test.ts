@@ -67,7 +67,7 @@ describe('useAsyncAction', () => {
     const d1 = deferred<string>()
     const d2 = deferred<string>()
     let call = 0
-    const fn = vi.fn(() => (call++ === 0 ? d1.promise : d2.promise))
+    const fn = vi.fn((_arg: string) => (call++ === 0 ? d1.promise : d2.promise))
     const { result } = renderHook(() => useAsyncAction(fn))
 
     let p1!: Promise<void>
@@ -96,7 +96,7 @@ describe('useAsyncAction', () => {
     const d1 = deferred<string>()
     const d2 = deferred<string>()
     let call = 0
-    const fn = vi.fn(() => (call++ === 0 ? d1.promise : d2.promise))
+    const fn = vi.fn((_arg: string) => (call++ === 0 ? d1.promise : d2.promise))
     const { result } = renderHook(() => useAsyncAction(fn))
 
     let p1!: Promise<void>
