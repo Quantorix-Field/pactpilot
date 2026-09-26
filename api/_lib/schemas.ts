@@ -1,8 +1,6 @@
 import { z } from 'zod'
 import { LIMITS } from './limits.js'
 
-/* ---------- Incoming requests: everything the browser sends is validated ---------- */
-
 function stripControl(input: string): string {
   let out = ''
   for (const ch of input) {
@@ -83,8 +81,6 @@ export const CompareRequestSchema = z.object({
   language: LanguageSchema,
 })
 
-/* ---------- AI output: parsed defensively, never trusted ---------- */
-
 const req = (max: number) =>
   z
     .string()
@@ -112,15 +108,11 @@ const isoDate = z
   })
 
 const capped = <T extends z.ZodTypeAny>(item: T, max: number) =>
-  z.array(item).transform((items) => items.slice(0, max))
-
-const optList = <T extends z.ZodTypeAny>(item: T, max: number) =>
   z
     .array(item)
     .nullish()
     .transform((items) => (items ?? []).slice(0, max))
 
-/** The model can never mark its own work as verified: this is always false until verify.ts runs. */
 const unverified = z.unknown().transform((): boolean => false)
 
 export const SEVERITIES = ['high', 'medium', 'ok'] as const
@@ -178,14 +170,14 @@ const NextStepSchema = z.object({
 export const AnalysisSchema = z.object({
   isLegalDocument: z.boolean().default(true),
   docType: req(80),
-  parties: optList(req(40), 4),
+  parties: capped(req(40), 4),
   summary: req(900),
-  keyFacts: optList(KeyFactSchema, 8),
+  keyFacts: capped(KeyFactSchema, 8),
   findings: capped(FindingSchema, 14),
-  contradictions: optList(ContradictionSchema, 5),
-  obligations: optList(ObligationSchema, 12),
+  contradictions: capped(ContradictionSchema, 5),
+  obligations: capped(ObligationSchema, 12),
   nextSteps: capped(NextStepSchema, 6),
-  lawyerQuestions: optList(req(240), 8),
+  lawyerQuestions: capped(req(240), 8),
 })
 
 const WhatIfStepSchema = z.object({
@@ -201,7 +193,7 @@ export const WhatIfSchema = z.object({
   outcome: z.enum(['good', 'mixed', 'bad', 'unclear']).catch('unclear'),
   answer: req(700),
   steps: capped(WhatIfStepSchema, 7),
-  options: optList(req(300), 5),
+  options: capped(req(300), 5),
   caveat: opt(300),
 })
 
@@ -209,7 +201,7 @@ export const AskSchema = z.object({
   answerable: z.boolean(),
   answer: req(1200),
   confidence: z.enum(['high', 'medium', 'low']).catch('low'),
-  citations: optList(CitationSchema, 4),
+  citations: capped(CitationSchema, 4),
 })
 
 const ChangeSchema = z.object({
@@ -231,15 +223,3 @@ export const CompareSchema = z.object({
   better: z.enum(['a', 'b', 'balanced', 'unclear']).catch('unclear'),
   differences: capped(ChangeSchema, 12),
 })
-
-/* ---------- Types shared with the browser (type-only imports, erased at build time) ---------- */
-
-export type ClauseIn = z.infer<typeof ClauseInSchema>
-export type Severity = (typeof SEVERITIES)[number]
-export type Citation = z.infer<typeof CitationSchema>
-export type Finding = z.infer<typeof FindingSchema>
-export type Analysis = z.infer<typeof AnalysisSchema>
-export type Obligation = Analysis['obligations'][number]
-export type WhatIfResult = z.infer<typeof WhatIfSchema>
-export type AskResult = z.infer<typeof AskSchema>
-export type CompareResult = z.infer<typeof CompareSchema>
