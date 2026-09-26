@@ -11,10 +11,11 @@ import { LIMITS } from '../api/_lib/limits'
 import { ContractPaper } from './components/ContractPaper'
 import { Disclaimer } from './components/Disclaimer'
 import { Hero } from './components/Hero'
+import { RiskMap } from './components/RiskMap'
 import { SummaryView } from './components/SummaryView'
 import { useAnalysis } from './hooks/useAnalysis'
 import { useAsyncAction } from './hooks/useAsyncAction'
-import type { Language } from './types'
+import type { FeatureId, Language } from './types'
 import { extractPdfText, fileToBase64 } from './utils/api'
 import { splitIntoClauses } from './utils/clauseSplitter'
 
@@ -27,6 +28,7 @@ export default function App(): ReactElement {
   const [dragOver, setDragOver] = useState(false)
   const [inputError, setInputError] = useState<string | null>(null)
   const [activeClauseId, setActiveClauseId] = useState<string | null>(null)
+  const [tab, setTab] = useState<FeatureId>('overview')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const analysis = useAnalysis()
@@ -85,6 +87,7 @@ export default function App(): ReactElement {
     }
     setInputError(null)
     setActiveClauseId(null)
+    setTab('overview')
     await analysis.run(split.clauses, {
       perspective: perspective.trim() || undefined,
       language,
@@ -95,6 +98,7 @@ export default function App(): ReactElement {
   function handleEdit(): void {
     analysis.reset()
     setActiveClauseId(null)
+    setTab('overview')
   }
 
   const busy = analysis.state.status === 'loading' || extract.state.status === 'loading'
@@ -227,13 +231,44 @@ export default function App(): ReactElement {
               activeClauseId={activeClauseId}
               onClauseClick={setActiveClauseId}
             />
-            <div className="sticky">
+            <div className="sticky stack">
               {analysis.state.status === 'ready' ? (
-                <SummaryView
-                  analysis={analysis.state.value.analysis}
-                  clauses={split.clauses}
-                  onClauseClick={setActiveClauseId}
-                />
+                <>
+                  <div className="tabs" role="tablist" aria-label="Analysis views">
+                    <button
+                      type="button"
+                      role="tab"
+                      className="tab"
+                      aria-selected={tab === 'overview'}
+                      onClick={() => setTab('overview')}
+                    >
+                      Overview
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      className="tab"
+                      aria-selected={tab === 'risks'}
+                      onClick={() => setTab('risks')}
+                    >
+                      Risks
+                    </button>
+                  </div>
+                  {tab === 'overview' ? (
+                    <SummaryView
+                      analysis={analysis.state.value.analysis}
+                      clauses={split.clauses}
+                      onClauseClick={setActiveClauseId}
+                    />
+                  ) : (
+                    <RiskMap
+                      findings={analysis.state.value.analysis.findings}
+                      clauses={split.clauses}
+                      activeClauseId={activeClauseId}
+                      onClauseClick={setActiveClauseId}
+                    />
+                  )}
+                </>
               ) : (
                 <div className="panel stack">
                   <p className="skeleton" style={{ width: '70%' }} />
