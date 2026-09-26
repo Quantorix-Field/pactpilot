@@ -1,4 +1,6 @@
-export function Hero(): JSX.Element {
+import type { ReactElement } from 'react'
+
+export function Hero(): ReactElement {
   return (
     <section className="hero" aria-label="About PactPilot">
       <p className="eyebrow reveal">§ Read before you sign</p>
