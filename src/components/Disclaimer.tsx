@@ -1,4 +1,6 @@
-export function Disclaimer(): JSX.Element {
+import type { ReactElement } from 'react'
+
+export function Disclaimer(): ReactElement {
   return (
     <footer className="disclaimer">
       <p>
