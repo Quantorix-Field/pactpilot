@@ -6,6 +6,7 @@ import {
   type ChangeEvent,
   type CSSProperties,
   type DragEvent,
+  type ReactElement,
 } from 'react'
 import { LIMITS } from '../api/_lib/limits'
 import { Disclaimer } from './components/Disclaimer'
@@ -22,7 +23,7 @@ function readinessScore(high: number, medium: number): number {
   return Math.max(0, Math.min(100, 100 - high * 18 - medium * 6))
 }
 
-function ResultPreview({ analysis }: { analysis: Analysis }): JSX.Element {
+function ResultPreview({ analysis }: { analysis: Analysis }): ReactElement {
   const high = analysis.findings.filter((f) => f.severity === 'high').length
   const medium = analysis.findings.filter((f) => f.severity === 'medium').length
   const ok = analysis.findings.filter((f) => f.severity === 'ok').length
@@ -75,7 +76,7 @@ function ResultPreview({ analysis }: { analysis: Analysis }): JSX.Element {
   )
 }
 
-export default function App(): JSX.Element {
+export default function App(): ReactElement {
   const [text, setText] = useState('')
   const [language, setLanguage] = useState<Language>('en')
   const [perspective, setPerspective] = useState('')
