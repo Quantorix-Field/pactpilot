@@ -1,19 +1,12 @@
-/**
- * Finds where a verified quote sits inside a clause's original text, so the interface can
- * draw the highlighter pen on the real words. The server already confirmed the quote exists
- * (ignoring case, spacing and punctuation); this only locates it for rendering.
- */
-
 export interface QuoteRange {
   start: number
   end: number
 }
 
 interface Mapped {
-  /** Lowercased letters/numbers/marks only, with runs of everything else collapsed to one space. */
   norm: string
-  /** norm[i] came from the original string at map[i] (a UTF-16 index, safe to use in .slice()). */
   map: number[]
+  endMap: number[]
 }
 
 const WORD = /[\p{L}\p{N}\p{M}]/u
@@ -21,16 +14,19 @@ const WORD = /[\p{L}\p{N}\p{M}]/u
 function mapText(text: string): Mapped {
   let norm = ''
   const map: number[] = []
+  const endMap: number[] = []
   let atSpace = true
   let i = 0
   for (const ch of text) {
     if (WORD.test(ch)) {
       norm += ch.toLowerCase()
       map.push(i)
+      endMap.push(i + ch.length)
       atSpace = false
     } else if (!atSpace) {
       norm += ' '
       map.push(i)
+      endMap.push(i + ch.length)
       atSpace = true
     }
     i += ch.length
@@ -38,24 +34,20 @@ function mapText(text: string): Mapped {
   if (atSpace && norm.length > 0) {
     norm = norm.slice(0, -1)
     map.pop()
+    endMap.pop()
   }
-  return { norm, map }
+  return { norm, map, endMap }
 }
 
-/** Same normalization, used only to build the search needle (no mapping needed). */
 function normalize(text: string): string {
   return mapText(text).norm
 }
 
-/**
- * Returns the [start, end) character range in `clauseText` that the quote refers to, or
- * null if it truly cannot be found (should be rare, since the server already checked).
- */
 export function findQuoteRange(clauseText: string, quote: string): QuoteRange | null {
   const needle = normalize(quote)
   if (needle.length < 3) return null
 
-  const { norm, map } = mapText(clauseText)
+  const { norm, map, endMap } = mapText(clauseText)
   const haystack = ` ${norm} `
   const at = haystack.indexOf(` ${needle} `)
   if (at === -1) return null
@@ -64,12 +56,11 @@ export function findQuoteRange(clauseText: string, quote: string): QuoteRange | 
   const normEnd = normStart + needle.length
 
   const start = map[normStart]
-  const end = normEnd < map.length ? map[normEnd] : clauseText.length
-  if (start === undefined) return null
+  const end = endMap[normEnd - 1]
+  if (start === undefined || end === undefined) return null
   return { start, end }
 }
 
-/** Splits clause text into plain/highlighted segments, ready to render. */
 export interface TextSegment {
   text: string
   highlighted: boolean
